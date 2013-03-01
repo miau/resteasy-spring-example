@@ -15,6 +15,7 @@
     <org.slf4j.version>1.7.2</org.slf4j.version>
     <ch.qos.logback.version>1.0.9</ch.qos.logback.version>
     <org.apache.httpcomponents.version>4.2.3</org.apache.httpcomponents.version>
+    <org.spockframework.version>0.7-groovy-2.0</org.spockframework.version>
     <org.unitils.version>3.3</org.unitils.version>
   </properties>
 
@@ -238,6 +239,30 @@
       <version>2.1</version>
     </dependency>
     <dependency>
+      <groupId>org.spockframework</groupId>
+      <artifactId>spock-core</artifactId>
+      <version>${org.spockframework.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+           <groupId>org.codehaus.groovy</groupId>
+           <artifactId>groovy-all</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.spockframework</groupId>
+      <artifactId>spock-spring</artifactId>
+      <version>${org.spockframework.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.spockframework</groupId>
+      <artifactId>spock-unitils</artifactId>
+      <version>${org.spockframework.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.unitils</groupId>
       <artifactId>unitils-dbunit</artifactId>
       <version>${org.unitils.version}</version>
@@ -267,6 +292,16 @@
   </dependencies>
   <build>
     <finalName>resteasy-spring-example</finalName>
+
+    <!-- target/classes や war の WEB-INF/classes に含めたいファイルの指定。 -->
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>src/main/webapp/WEB-INF</directory>
+      </resource>
+    </resources>
 
     <!-- target/test-classes に含めたい（＝テスト時のみ必要な）ファイルの指定 -->
     <testResources>
@@ -328,6 +363,137 @@
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>0.6.2.201302030002</version>
       </plugin>
+      <plugin>
+        <groupId>org.codehaus.gmaven</groupId>
+        <artifactId>gmaven-plugin</artifactId>
+        <version>1.5</version>
+        <configuration>
+          <providerSelection>2.0</providerSelection>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+                <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.codehaus.gmaven.runtime</groupId>
+            <artifactId>gmaven-runtime-2.0</artifactId>
+            <version>1.5</version>
+            <exclusions>
+              <exclusion>
+                 <groupId>org.codehaus.groovy</groupId>
+                 <artifactId>groovy-all</artifactId>
+              </exclusion>
+            </exclusions>
+          </dependency>
+          <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>${org.codehaus.groovy.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <!-- spock-maven:0.7-groovy-2.0 は Maven 3 に対応していないためコメントアウト。テストクラス名を *Spec ではなく *Test にして回避  -->
+      <!--
+      <plugin>
+        <groupId>org.spockframework</groupId>
+        <artifactId>spock-maven</artifactId>
+        <version>${org.spockframework.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>find-specs</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      -->
+      <!-- sourceDirectory や scriptSourceDirectory では 1 箇所しかパスを指定できないため、ここでパスを追加する。
+           追加しないと m2e でビルドパスが削られてしまう。 -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>target/generated-sources/apt</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-test-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/test/groovy</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
+    <pluginManagement>
+      <plugins>
+        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>
+                      org.codehaus.gmaven
+                    </groupId>
+                    <artifactId>
+                      gmaven-plugin
+                    </artifactId>
+                    <versionRange>[1.5,)</versionRange>
+                    <goals>
+                      <goal>testCompile</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore></ignore>
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>
+                      org.spockframework
+                    </groupId>
+                    <artifactId>spock-maven</artifactId>
+                    <versionRange>
+                      [0.7-groovy-2.0,)
+                    </versionRange>
+                    <goals>
+                      <goal>find-specs</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore></ignore>
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
   </build>
 </project>
