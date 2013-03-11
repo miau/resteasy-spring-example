@@ -93,4 +93,30 @@ class EmployeeServiceTest extends Specification {
             [ employeeId: 3, employeeName: "ワード", hiredate: new LocalDateTime("1981-02-22T00:00:00.000"), salary: 1250 ],
         ]
     }
+
+    def "EmployeeService#get が期待された Employee の一覧を返す - asMap を使う例"() {
+        // ※Groovy を拡張して Object.asMap で Map に変換できるようにしているので、こちらを使うと簡潔に書ける
+        when:
+        def response = service.get()
+
+        then:
+        response.employee*.asMap() == [
+            [ employeeId: 1, employeeName: "スミス", hiredate: new LocalDateTime("1980-12-17T00:00:00.000"), salary:  800, versionNo: null ],
+            [ employeeId: 2, employeeName: "アレン", hiredate: new LocalDateTime("1981-02-20T00:00:00.000"), salary: 1600, versionNo: null ],
+            [ employeeId: 3, employeeName: "ワード", hiredate: new LocalDateTime("1981-02-22T00:00:00.000"), salary: 1250, versionNo: null ],
+        ]
+    }
+
+    def "EmployeeService#get が期待された Employee の一覧を返す - asMap をフィールド指定で使う例"() {
+        // ※Object.asMap にフィールド名を渡すと、そのフィールドのみを含む Map に変換できる
+        when:
+        def response = service.get()
+
+        then:
+        response.employee*.asMap("employeeId", "employeeName", "hiredate", "salary") == [
+            [ employeeId: 1, employeeName: "スミス", hiredate: new LocalDateTime("1980-12-17T00:00:00.000"), salary:  800 ],
+            [ employeeId: 2, employeeName: "アレン", hiredate: new LocalDateTime("1981-02-20T00:00:00.000"), salary: 1600 ],
+            [ employeeId: 3, employeeName: "ワード", hiredate: new LocalDateTime("1981-02-22T00:00:00.000"), salary: 1250 ],
+        ]
+    }
 }

@@ -316,6 +316,7 @@
             <includes>
                 <include>*.xml</include>
                 <include>*.properties</include>
+                <include>META-INF/services/org.codehaus.groovy.runtime.ExtensionModule</include>
             </includes>
         </testResource>
         <testResource>

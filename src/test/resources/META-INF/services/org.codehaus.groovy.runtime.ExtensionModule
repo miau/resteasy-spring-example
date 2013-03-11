@@ -1,0 +1,4 @@
+moduleName = TestExtension
+moduleVersion = 1.0
+extensionClasses = example.infrastructure.util.TestExtension
+staticExtensionClasses =
