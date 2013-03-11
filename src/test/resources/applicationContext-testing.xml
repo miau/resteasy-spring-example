@@ -1,0 +1,121 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:context="http://www.springframework.org/schema/context"
+  xmlns:util="http://www.springframework.org/schema/util"
+  xmlns:aop="http://www.springframework.org/schema/aop"
+  xmlns:tx="http://www.springframework.org/schema/tx"
+  xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+  xmlns:jee="http://www.springframework.org/schema/jee"
+  xsi:schemaLocation="
+    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd
+    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+    http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.2.xsd
+    http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.2.xsd"
+  default-lazy-init="true">
+
+  <!-- ========================= GENERAL DEFINITIONS ========================= -->
+
+
+  <!-- ========================= CONPORNENT DEFINITIONS ======================== -->
+  <bean id="validator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean"/>
+
+  <bean id="clientHttpRequestFactoryCreator" class="example.infrastructure.webclient.CustomHttpComponentsClientHttpRequestFactoryCreator" >
+    <property name="maxTotalConnections" value="100"></property>
+    <property name="maxConnectionsPerRoute" value="10"></property>
+    <property name="connectionTimeoutMilliseconds" value="2000"></property>
+    <property name="readTimeoutMilliseconds" value="2000"></property>
+    <property name="retryHandler">
+        <bean class="example.infrastructure.webclient.CustomHttpRequestRetryHandler"></bean>
+    </property>
+    <property name="retryStrategy">
+        <bean class="example.infrastructure.webclient.CustomServiceUnavailableRetryStrategy"></bean>
+    </property>
+  </bean>
+  <bean id="clientHttpRequestFactory" class="org.springframework.http.client.HttpComponentsClientHttpRequestFactory"
+    factory-bean="clientHttpRequestFactoryCreator"
+    factory-method="createFacotry">
+  </bean>
+
+  <context:component-scan base-package="example" />
+
+<!-- <context:component-scan base-package="example.application.controller.rest.dto" /> -->
+<!-- <context:component-scan base-package="example.application.controller.rest" /> -->
+<!-- <context:component-scan base-package="example.application.model.dao.db.dto" /> -->
+<!-- <context:component-scan base-package="example.application.model.dao.db" /> -->
+<!-- <context:component-scan base-package="example.application.model.dao.rest.dto" /> -->
+<!-- <context:component-scan base-package="example.application.model.dao.rest" /> -->
+<!-- <context:component-scan base-package="example.infrastructure.db.domasupport" /> -->
+<!-- <context:component-scan base-package="example.infrastructure.msgpack" /> -->
+<!-- <context:component-scan base-package="example.infrastructure.transaction" /> -->
+<!-- <context:component-scan base-package="example.infrastructure.utill" /> -->
+
+  <!-- ========================= DATASOURCE CONFIGURATION ======================== -->
+  <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager" >
+    <constructor-arg ref="dataSource"/>
+    <qualifier value="ReadWrite"/>
+  </bean>
+
+  <bean id="dataSource" class="org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy">
+    <constructor-arg ref="readWriteNativeDataSource" />
+  </bean>
+
+
+  <!-- テストの際は参照用と更新用が同一の dataSource を指すよう設定する -->
+  <bean id="readOnlyTransactionManager" class="example.infrastructure.transaction.PlatformTransactionManagerProxy">
+    <constructor-arg ref="transactionManager"/>
+    <qualifier value="ReadOnly"/>
+  </bean>
+
+  <bean id="readOnlyDataSource" class="org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy">
+    <constructor-arg ref="readOnlyNativeDataSource" />
+  </bean>
+
+  <!-- ========================= DOMA CONFIGURATION ========================== -->
+  <bean id="domaConfiguration" class="example.infrastructure.db.domasupport.DataSourceConfiguration" >
+    <property name="dialect" ref="oracleDialect"></property>
+    <property name="dataSource" ref="domaDataSource"></property>
+    <property name="requiresNewController" ref="domaRequiresNewController"></property>
+  </bean>
+
+  <bean id="oracleDialect" class="org.seasar.doma.jdbc.dialect.OracleDialect" />
+
+  <!-- テストの際は SpringJUnit4ClassRunner が自動的にトランザクションを開始する関係で
+       MultiTransactionAwareDataSourceProxy の機構が利用できないため、参照用、更新用を区別しない  -->
+  <bean id="domaDataSource" class="org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy" >
+    <constructor-arg name="targetDataSource" ref="dataSource"></constructor-arg>
+  </bean>
+
+  <!-- ========================= ASPECT CONFIGURATION ======================== -->
+  <tx:annotation-driven />
+
+
+  <!-- ========================= ENVIROMENT DEPEND DEFINITIONS ======================== -->
+<!--   <beans profile="testing" default-lazy-init="default"> -->
+    <context:property-placeholder location="classpath:jdbc.properties" />
+
+    <bean id="dialect" class="org.seasar.doma.jdbc.dialect.OracleDialect" />
+
+    <!-- Unitils の接続を Spring 共用する設定。Spring の接続と競合しないためにこの設定を使用する。 -->
+    <bean id="readWriteNativeDataSource" class="org.unitils.database.UnitilsDataSourceFactoryBean" />
+    <bean id="readOnlyNativeDataSource" class="org.unitils.database.UnitilsDataSourceFactoryBean" />
+
+    <!-- 必要になるまで接続を試みないデータソース。DB に接続しないケースではこちらのほうが速い。  -->
+<!--
+    <bean id="readWriteNativeDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource" >
+      <constructor-arg name="driverClassName" value="${jdbc.read.driverClassName}"></constructor-arg>
+      <constructor-arg name="url" value="${jdbc.readwrite.url}" ></constructor-arg>
+      <constructor-arg name="username" value="${jdbc.readwrite.username}" ></constructor-arg>
+      <constructor-arg name="password" value="${jdbc.readwrite.password}" ></constructor-arg>
+    </bean>
+    <bean id="readOnlyNativeDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource" >
+      <constructor-arg name="driverClassName" value="${jdbc.read.driverClassName}"></constructor-arg>
+      <constructor-arg name="url" value="${jdbc.readwrite.url}" ></constructor-arg>
+      <constructor-arg name="username" value="${jdbc.readwrite.username}" ></constructor-arg>
+      <constructor-arg name="password" value="${jdbc.readwrite.password}" ></constructor-arg>
+    </bean>
+-->
+<!--   </beans> -->
+</beans>

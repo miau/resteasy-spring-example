@@ -15,6 +15,7 @@
     <org.slf4j.version>1.7.2</org.slf4j.version>
     <ch.qos.logback.version>1.0.9</ch.qos.logback.version>
     <org.apache.httpcomponents.version>4.2.3</org.apache.httpcomponents.version>
+    <org.unitils.version>3.3</org.unitils.version>
   </properties>
 
   <repositories>
@@ -189,7 +190,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.1</version>
+      <version>4.11</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -236,9 +237,54 @@
       <artifactId>joda-time</artifactId>
       <version>2.1</version>
     </dependency>
+    <dependency>
+      <groupId>org.unitils</groupId>
+      <artifactId>unitils-dbunit</artifactId>
+      <version>${org.unitils.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+        <!-- Spock already includes JUnit -->
+        <exclusion>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+        </exclusion>
+        <!-- due to Hibernate 3.2 dependency -->
+        <exclusion>
+          <groupId>org.unitils</groupId>
+          <artifactId>unitils-dbmaintainer</artifactId>
+        </exclusion>
+        <!-- caused by DBUnit dependency -->
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-nop</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
   <build>
     <finalName>resteasy-spring-example</finalName>
+
+    <!-- target/test-classes に含めたい（＝テスト時のみ必要な）ファイルの指定 -->
+    <testResources>
+        <testResource>
+            <directory>src/test/resources</directory>
+            <includes>
+                <include>*.xml</include>
+                <include>*.properties</include>
+            </includes>
+        </testResource>
+        <testResource>
+            <directory>src/test/java</directory>
+            <includes>
+                <include>**/*.xml</include>
+            </includes>
+        </testResource>
+    </testResources>
+
     <plugins>
       <plugin>
         <groupId>org.bsc.maven</groupId>
