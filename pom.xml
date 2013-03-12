@@ -323,6 +323,11 @@
           <scanIntervalSeconds>1</scanIntervalSeconds>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.6.2.201302030002</version>
+      </plugin>
     </plugins>
   </build>
 </project>
