@@ -299,7 +299,8 @@
   <build>
     <finalName>resteasy-spring-example</finalName>
 
-    <!-- target/classes や war の WEB-INF/classes に含めたいファイルの指定。 -->
+    <!-- target/classes や war の WEB-INF/classes に含めたいファイルの指定。
+         testResources については環境ごとに異なるので profiles の項を参照。 -->
     <resources>
       <resource>
         <directory>src/main/resources</directory>
@@ -308,30 +309,6 @@
         <directory>src/main/webapp/WEB-INF</directory>
       </resource>
     </resources>
-
-    <!-- target/test-classes に含めたい（＝テスト時のみ必要な）ファイルの指定 -->
-    <testResources>
-        <testResource>
-            <directory>src/test/resources</directory>
-            <includes>
-                <include>*.xml</include>
-                <include>*.properties</include>
-                <include>META-INF/services/org.codehaus.groovy.runtime.ExtensionModule</include>
-            </includes>
-        </testResource>
-        <testResource>
-            <directory>src/test/java</directory>
-            <includes>
-                <include>**/*.xml</include>
-            </includes>
-        </testResource>
-        <testResource>
-            <directory>src/test/groovy</directory>
-            <includes>
-                <include>**/*.xml</include>
-            </includes>
-        </testResource>
-    </testResources>
 
     <plugins>
       <plugin>
@@ -517,4 +494,66 @@
       </plugins>
     </pluginManagement>
   </build>
+
+  <profiles>
+    <profile>
+      <!-- mvn で実行する際の設定。-Pmaven オプションをつける or -P を省略すると有効になる。 -->
+      <id>mvn</id>
+      <activation>
+        <!-- デフォルト起動設定。-P を省略した場合はこの設定が使われる。 -->
+        <activeByDefault>true</activeByDefault>
+      </activation>
+
+      <build>
+        <!-- target/test-classes に含めたい（＝テスト時のみ必要な）ファイルの指定 -->
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <includes>
+                    <include>*.xml</include>
+                    <include>*.properties</include>
+                    <include>META-INF/services/org.codehaus.groovy.runtime.ExtensionModule</include>
+                </includes>
+            </testResource>
+            <testResource>
+                <directory>src/test/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </testResource>
+            <testResource>
+                <directory>src/test/groovy</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </testResource>
+        </testResources>
+      </build>
+    </profile>
+    <profile>
+      <!-- Eclipse で実行する際の設定。-Peclipse オプションをつけると有効になる。 -->
+      <id>eclipse</id>
+      <build>
+        <!-- target/test-classes に含めたい（＝テスト時のみ必要な）ファイルの指定 -->
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <includes>
+                    <include>*.xml</include>
+                    <include>*.properties</include>
+                    <include>META-INF/services/org.codehaus.groovy.runtime.ExtensionModule</include>
+                </includes>
+            </testResource>
+            <testResource>
+                <directory>src/test/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </testResource>
+            <!-- m2e で src/test/groovy がソースディレクトリ、リソースディレクトリの両方に含まれると
+                 *.java のみ include する設定が付加されてしまうため、Eclipse ではリソースディレクトリに含めない。 -->
+        </testResources>
+      </build>
+    </profile>
+  </profiles>
 </project>
